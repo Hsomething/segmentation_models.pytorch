@@ -68,7 +68,7 @@ class Epoch:
 
 class TrainEpoch(Epoch):
 
-    def __init__(self, model, loss, metrics, optimizer, device='cpu', verbose=True,amp = False):
+    def __init__(self, model, loss, metrics, optimizer, device='cpu', verbose=True,amp = False,ocr = False):
         super().__init__(
             model=model,
             loss=loss,
@@ -78,6 +78,7 @@ class TrainEpoch(Epoch):
             verbose=verbose,
         )
         self.optimizer = optimizer
+        self.ocr = ocr
         if eval(torch.__version__[:3])<1.6:
             self.amp = False
             print('torch version is too lower.If you want us amp Please updata torch to 1.6.0')
@@ -102,18 +103,23 @@ class TrainEpoch(Epoch):
             self.scaler.scale(loss).backward()
             self.scaler.step(self.optimizer)
             self.scaler.update()
+            if self.ocr:
+                return loss,prediction[1].float()
             return loss,prediction.float()
         else:
             prediction = self.model.forward(x)
             loss = self.loss(prediction, y)
             loss.backward()
             self.optimizer.step()
-            return loss, prediction
+        if self.ocr:
+            return loss, prediction[1]
+        else :
+            return loss,prediction
 
 
 class ValidEpoch(Epoch):
 
-    def __init__(self, model, loss, metrics, device='cpu', verbose=True):
+    def __init__(self, model, loss, metrics, device='cpu', verbose=True,ocr = False):
         super().__init__(
             model=model,
             loss=loss,
@@ -122,6 +128,7 @@ class ValidEpoch(Epoch):
             device=device,
             verbose=verbose,
         )
+        self.ocr = ocr
 
     def on_epoch_start(self):
         self.model.eval()
@@ -130,4 +137,7 @@ class ValidEpoch(Epoch):
         with torch.no_grad():
             prediction = self.model.forward(x)
             loss = self.loss(prediction, y)
-        return loss, prediction
+        if self.ocr:
+            return loss,prediction[1]
+        else :
+            return loss, prediction

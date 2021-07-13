@@ -2,7 +2,7 @@ from typing import Optional, Union, List
 from .decoder import MAnetDecoder
 from ..encoders import get_encoder
 from ..base import SegmentationModel
-from ..base import SegmentationHead, ClassificationHead
+from ..base import get_header, ClassificationHead
 
 
 class MAnet(SegmentationModel):
@@ -58,6 +58,7 @@ class MAnet(SegmentationModel):
         decoder_pab_channels: int = 64,
         in_channels: int = 3,
         classes: int = 1,
+        head: str = "common",
         activation: Optional[Union[str, callable]] = None,
         aux_params: Optional[dict] = None,
         **kwargs
@@ -80,7 +81,8 @@ class MAnet(SegmentationModel):
             pab_channels=decoder_pab_channels
         )
 
-        self.segmentation_head = SegmentationHead(
+        self.segmentation_head = get_header(
+            header_name=head,
             in_channels=decoder_channels[-1],
             out_channels=classes,
             activation=activation,
