@@ -79,10 +79,10 @@ def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **
                 weights, name, list(encoders[name]["pretrained_settings"].keys()),
             ))
         try:
-            encoder.load_state_dict(model_zoo.load_url(settings["url"]))
+            encoder.load_state_dict(model_zoo.load_url(settings["url"]),strict=False)
         except:
             # swin transformer save mode is zip
-            encoder.load_state_dict(model_zoo.load_url(settings["url"])["model"])
+            encoder.load_state_dict(model_zoo.load_url(settings["url"])["model"],strict=False)
 
     encoder.set_in_channels(in_channels, pretrained=weights is not None)
     if output_stride != 32:
