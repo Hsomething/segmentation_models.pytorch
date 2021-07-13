@@ -18,6 +18,7 @@ from .timm_regnet import timm_regnet_encoders
 from .timm_sknet import timm_sknet_encoders
 from .timm_mobilenetv3 import timm_mobilenetv3_encoders
 from .timm_gernet import timm_gernet_encoders
+from .swinTransformer import swin_tarnsformerEncoder
 
 from .timm_universal import TimmUniversalEncoder
 
@@ -41,6 +42,7 @@ encoders.update(timm_regnet_encoders)
 encoders.update(timm_sknet_encoders)
 encoders.update(timm_mobilenetv3_encoders)
 encoders.update(timm_gernet_encoders)
+encoders.update(swin_tarnsformerEncoder)
 
 
 def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **kwargs):
@@ -63,7 +65,10 @@ def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **
         raise KeyError("Wrong encoder name `{}`, supported encoders: {}".format(name, list(encoders.keys())))
 
     params = encoders[name]["params"]
-    params.update(depth=depth)
+    if "swin" in name:
+        params.update(in_chans=in_channels)
+    else:
+        params.update(depth=depth)
     encoder = Encoder(**params)
 
     if weights is not None:
@@ -73,7 +78,11 @@ def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **
             raise KeyError("Wrong pretrained weights `{}` for encoder `{}`. Available options are: {}".format(
                 weights, name, list(encoders[name]["pretrained_settings"].keys()),
             ))
-        encoder.load_state_dict(model_zoo.load_url(settings["url"]))
+        try:
+            encoder.load_state_dict(model_zoo.load_url(settings["url"]))
+        except:
+            # swin transformer save mode is zip
+            encoder.load_state_dict(model_zoo.load_url(settings["url"])["model"])
 
     encoder.set_in_channels(in_channels, pretrained=weights is not None)
     if output_stride != 32:
