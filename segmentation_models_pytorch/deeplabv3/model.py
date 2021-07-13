@@ -50,6 +50,7 @@ class DeepLabV3(SegmentationModel):
             activation: Optional[str] = None,
             upsampling: int = 8,
             aux_params: Optional[dict] = None,
+            **kwargs
     ):
         super().__init__()
 
@@ -59,6 +60,7 @@ class DeepLabV3(SegmentationModel):
             depth=encoder_depth,
             weights=encoder_weights,
             output_stride=8,
+            **kwargs
         )
 
         self.decoder = DeepLabV3Decoder(

@@ -60,6 +60,7 @@ class PSPNet(SegmentationModel):
         activation: Optional[Union[str, callable]] = None,
         upsampling: int = 8,
         aux_params: Optional[dict] = None,
+        **kwargs
     ):
         super().__init__()
 
@@ -68,6 +69,7 @@ class PSPNet(SegmentationModel):
             in_channels=in_channels,
             depth=encoder_depth,
             weights=encoder_weights,
+            **kwargs
         )
 
         self.decoder = PSPDecoder(

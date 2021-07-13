@@ -51,7 +51,8 @@ class PAN(SegmentationModel):
             classes: int = 1,
             activation: Optional[Union[str, callable]] = None,
             upsampling: int = 4,
-            aux_params: Optional[dict] = None
+            aux_params: Optional[dict] = None,
+            **kwargs
     ):
         super().__init__()
 
@@ -64,6 +65,7 @@ class PAN(SegmentationModel):
             depth=5,
             weights=encoder_weights,
             output_stride=encoder_output_stride,
+            **kwargs
         )
 
         self.decoder = PANDecoder(
