@@ -68,7 +68,7 @@ class Epoch:
 
 class TrainEpoch(Epoch):
 
-    def __init__(self, model, loss, metrics, optimizer, device='cpu', verbose=True):
+    def __init__(self, model, loss, metrics, optimizer, device='cpu', verbose=True,amp = False):
         super().__init__(
             model=model,
             loss=loss,
@@ -78,17 +78,37 @@ class TrainEpoch(Epoch):
             verbose=verbose,
         )
         self.optimizer = optimizer
+        if eval(torch.__version__[:3])<1.6:
+            self.amp = False
+            print('torch version is too lower.If you want us amp Please updata torch to 1.6.0')
+        else :
+            if amp :
+                self.amp = True
+                self.scaler = torch.cuda.amp.GradScaler()
+            else :
+                self.amp = False
+                self.scaler = None
+
 
     def on_epoch_start(self):
         self.model.train()
 
     def batch_update(self, x, y):
         self.optimizer.zero_grad()
-        prediction = self.model.forward(x)
-        loss = self.loss(prediction, y)
-        loss.backward()
-        self.optimizer.step()
-        return loss, prediction
+        if self.amp:
+            with torch.cuda.amp.autocast():
+                prediction = self.model.forward(x)
+                loss = self.loss(prediction, y)
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+            return loss,prediction.float()
+        else:
+            prediction = self.model.forward(x)
+            loss = self.loss(prediction, y)
+            loss.backward()
+            self.optimizer.step()
+            return loss, prediction
 
 
 class ValidEpoch(Epoch):
