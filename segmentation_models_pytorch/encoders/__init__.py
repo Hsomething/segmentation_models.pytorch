@@ -20,6 +20,7 @@ from .timm_mobilenetv3 import timm_mobilenetv3_encoders
 from .timm_gernet import timm_gernet_encoders
 from .repvgg import repvgg_encoders
 from .swinTransformer import swin_tarnsformerEncoder
+from .hrnet import HRNetEncoders
 
 from .timm_universal import TimmUniversalEncoder
 
@@ -45,6 +46,7 @@ encoders.update(timm_mobilenetv3_encoders)
 encoders.update(timm_gernet_encoders)
 encoders.update(repvgg_encoders)
 encoders.update(swin_tarnsformerEncoder)
+encoders.update(HRNetEncoders)
 
 
 def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **kwargs):
