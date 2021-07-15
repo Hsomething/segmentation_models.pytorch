@@ -342,7 +342,40 @@ The following is a list of supported encoders in the SMP. Select the appropriate
 </div>
 </details>
 
+<details>
+<summary style="margin-left: 25px;">Swin Transformer</summary>
+<div style="margin-left: 25px;">
 
+|Encoder                         |Weights                         |Params, M                       |
+|--------------------------------|:------------------------------:|:------------------------------:|
+|swinT-T                         |imagenet-1k                     |28M                             |
+|swinT-S                         |imagenet-1k                     |50M                             |
+|swinT-B                         |imagenet-1k                     |88M                             |
+|swinT-L                         |imagenet-22k                    |197M                            |
+
+</div>
+</details>
+ 
+<details>
+<summary style="margin-left: 25px;">HrNet</summary>
+<div style="margin-left: 25px;">
+
+|Encoder                         |Weights                         |Params, M                       |
+|--------------------------------|:------------------------------:|:------------------------------:|
+|hrnet18-s1                      |imagenet                        |13.2M                           |
+|hrnet18-s2                      |imagenet                        |15.6M                           |
+|hrnet18                         |imagenet                        |21.3M                           |
+|hrnet30                         |imagenet                        |37.7M                           |
+|hrnet32                         |imagenet                        |41.2M                           |
+|hrnet40                         |imagenet                        |57.6M                           |
+|hrnet44                         |imagenet                        |67.1M                           |
+|hrnet48                         |imagenet                        |77.5M                           |
+|hrnet64                         |imagenet                        |128.1M                          |
+ 
+</div>
+</details>
+
+ 
 \* `ssl`, `swsl` - semi-supervised and weakly-supervised learning on ImageNet ([repo](https://github.com/facebookresearch/semi-supervised-ImageNet1K-models)).
 
 #### Timm Encoders <a name="timm"></a>
@@ -357,6 +390,26 @@ Pytorch Image Models (a.k.a. timm) has a lot of pretrained models and interface 
 Total number of supported encoders: 467
  - [table with available encoders](https://smp.readthedocs.io/en/latest/encoders_timm.html)
 
+ 
+#### SEModules <a name="semodules"></a>
+
+The following is a list of supported se_modules in self SMP decders. 
+
+ 
+<details>
+<summary style="margin-left: 25px;">Se Modules</summary>
+<div style="margin-left: 25px;">
+
+|module Name                     |paper link                      |
+|--------------------------------|:------------------------------:|
+|scse                            |                       |
+|ppsa                            |https://arxiv.org/pdf/2107.00782.pdf                        |
+|spsa                            |https://arxiv.org/pdf/2107.00782.pdf                        |
+
+ 
+</div>
+</details> 
+ 
 ### 🔁 Models API <a name="api"></a>
 
  - `model.encoder` - pretrained backbone to extract features of different spatial resolution
