@@ -99,21 +99,28 @@ class TrainEpoch(Epoch):
         if self.amp:
             with torch.cuda.amp.autocast():
                 prediction = self.model.forward(x)
-                loss = self.loss(prediction, y)
+                if self.ocr:
+                   loss1 = self.loss(prediction[0],y)
+                   loss2 = self.loss(prediction[1],y)
+                   loss = loss1+loss2
+                   prediction = prediction[1].float()
+                else :
+                    loss = self.loss(prediction, y)
             self.scaler.scale(loss).backward()
             self.scaler.step(self.optimizer)
             self.scaler.update()
-            if self.ocr:
-                return loss,prediction[1].float()
             return loss,prediction.float()
         else:
             prediction = self.model.forward(x)
-            loss = self.loss(prediction, y)
+            if self.ocr:
+                loss1 = self.loss(prediction[0], y)
+                loss2 = self.loss(prediction[1], y)
+                prediction = prediction[1]
+                loss = loss1 + loss2
+            else:
+                loss = self.loss(prediction, y)
             loss.backward()
             self.optimizer.step()
-        if self.ocr:
-            return loss, prediction[1]
-        else :
             return loss,prediction
 
 
@@ -138,6 +145,10 @@ class ValidEpoch(Epoch):
             prediction = self.model.forward(x)
             loss = self.loss(prediction, y)
         if self.ocr:
+            loss1 = self.loss(prediction[0], y)
+            loss2 = self.loss(prediction[1], y)
+            loss = loss1+loss2
             return loss,prediction[1]
         else :
+            self.loss(prediction, y)
             return loss, prediction
