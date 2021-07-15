@@ -510,35 +510,35 @@ class HighResolutionNet(nn.Module):
                 "FUSE_METHOD": fuse_method,
             }, num_channels_, multi_scale_output=True)
 
-        last_inp_channels = np.int(np.sum(pre_stage_channels))
-        ocr_mid_channels = ocr_mid_channels
-        ocr_key_channels = ocr_key_channels
-
-        self.conv3x3_ocr = nn.Sequential(
-            nn.Conv2d(last_inp_channels, ocr_mid_channels,
-                      kernel_size=3, stride=1, padding=1),
-            BatchNorm2d(ocr_mid_channels),
-            nn.ReLU(inplace=relu_inplace),
-        )
-        self.ocr_gather_head = SpatialGather_Module(num_classes)
-
-        self.ocr_distri_head = SpatialOCR_Module(in_channels=ocr_mid_channels,
-                                                 key_channels=ocr_key_channels,
-                                                 out_channels=ocr_mid_channels,
-                                                 scale=1,
-                                                 dropout=0.05,
-                                                 )
-        self.cls_head = nn.Conv2d(
-            ocr_mid_channels, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
-
-        self.aux_head = nn.Sequential(
-            nn.Conv2d(last_inp_channels, last_inp_channels,
-                      kernel_size=1, stride=1, padding=0),
-            BatchNorm2d(last_inp_channels),
-            nn.ReLU(inplace=relu_inplace),
-            nn.Conv2d(last_inp_channels, num_classes,
-                      kernel_size=1, stride=1, padding=0, bias=True)
-        )
+        # last_inp_channels = np.int(np.sum(pre_stage_channels))
+        # ocr_mid_channels = ocr_mid_channels
+        # ocr_key_channels = ocr_key_channels
+        #
+        # self.conv3x3_ocr = nn.Sequential(
+        #     nn.Conv2d(last_inp_channels, ocr_mid_channels,
+        #               kernel_size=3, stride=1, padding=1),
+        #     BatchNorm2d(ocr_mid_channels),
+        #     nn.ReLU(inplace=relu_inplace),
+        # )
+        # self.ocr_gather_head = SpatialGather_Module(num_classes)
+        #
+        # self.ocr_distri_head = SpatialOCR_Module(in_channels=ocr_mid_channels,
+        #                                          key_channels=ocr_key_channels,
+        #                                          out_channels=ocr_mid_channels,
+        #                                          scale=1,
+        #                                          dropout=0.05,
+        #                                          )
+        # self.cls_head = nn.Conv2d(
+        #     ocr_mid_channels, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+        #
+        # self.aux_head = nn.Sequential(
+        #     nn.Conv2d(last_inp_channels, last_inp_channels,
+        #               kernel_size=1, stride=1, padding=0),
+        #     BatchNorm2d(last_inp_channels),
+        #     nn.ReLU(inplace=relu_inplace),
+        #     nn.Conv2d(last_inp_channels, num_classes,
+        #               kernel_size=1, stride=1, padding=0, bias=True)
+        # )
 
     def _make_transition_layer(
             self, num_channels_pre_layer, num_channels_cur_layer):
@@ -662,32 +662,33 @@ class HighResolutionNet(nn.Module):
         x = self.stage4(x_list)
 
         # Upsampling
-        x0_h, x0_w = x[0].size(2), x[0].size(3)
-        x1 = F.interpolate(x[1], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=ALIGN_CORNERS)
-        x2 = F.interpolate(x[2], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=ALIGN_CORNERS)
-        x3 = F.interpolate(x[3], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=ALIGN_CORNERS)
+        # x0_h, x0_w = x[0].size(2), x[0].size(3)
+        # x1 = F.interpolate(x[1], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=ALIGN_CORNERS)
+        # x2 = F.interpolate(x[2], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=ALIGN_CORNERS)
+        # x3 = F.interpolate(x[3], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=ALIGN_CORNERS)
+        #
+        # feats = torch.cat([x[0], x1, x2, x3], 1)
+        #
+        # out_aux_seg = []
+        #
+        # # ocr
+        # out_aux = self.aux_head(feats)
+        # # compute contrast feature
+        # feats = self.conv3x3_ocr(feats)
+        #
+        # context = self.ocr_gather_head(feats, out_aux)
+        # feats = self.ocr_distri_head(feats, context)
+        #
+        # out = self.cls_head(feats)
+        #
+        # out_aux_seg.append(out_aux)
+        # out_aux_seg.append(out)
 
-        feats = torch.cat([x[0], x1, x2, x3], 1)
-
-        out_aux_seg = []
-
-        # ocr
-        out_aux = self.aux_head(feats)
-        # compute contrast feature
-        feats = self.conv3x3_ocr(feats)
-
-        context = self.ocr_gather_head(feats, out_aux)
-        feats = self.ocr_distri_head(feats, context)
-
-        out = self.cls_head(feats)
-
-        out_aux_seg.append(out_aux)
-        out_aux_seg.append(out)
-
-        return out_aux_seg
+        # return out_aux_seg
+        return x
 
     def init_weights(self, pretrained='', ):
         logger.info('=> init weights from normal distribution')
@@ -720,7 +721,9 @@ class HighResolutionNet(nn.Module):
 
 
 class HRNetEncoder(HighResolutionNet,EncoderMixin):
-    def __init__(self,num_classes,out_channels,align_corners,block = ["BOTTLENECK",'BASIC','BASIC','BASIC'],fuse_method = "SUM",
+    def __init__(self,num_classes,out_channels,align_corners,
+                 block = ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+                 fuse_method = "SUM",
                  num_modules = [1,1,4,3],
                  num_branches = [1,2,3,4],
                  num_channels = [[64],[48,96],[48,96,192],[48,96,192,384]],
@@ -734,7 +737,7 @@ class HRNetEncoder(HighResolutionNet,EncoderMixin):
         self._out_channels = out_channels
         self._in_channels = 3
 
-        del self.aux_head,self.conv3x3_ocr,self.ocr_gather_head,self.ocr_distri_head,self.cls_head
+        # del self.aux_head,self.conv3x3_ocr,self.ocr_gather_head,self.ocr_distri_head,self.cls_head
 
     def get_stages(self):
         return [
@@ -800,9 +803,15 @@ class HRNetEncoder(HighResolutionNet,EncoderMixin):
 
 
 url_map = {
-    "hrnet18":"https://pan.baidu.com/s/1Px_g1E2BLVRkKC5t-b-R5Q/hrnetv2_w18_imagenet_pretrained.pth",
-    "hrnet32":"https://pan.baidu.com/s/1xn92PSCg5KtXkKcnnLOycw/hrnetv2_w32_imagenet_pretrained.pth",
-    "hrnet48":"https://pan.baidu.com/s/13b8srQn8ARF9zHsaxvpRWA/hrnetv2_w48_imagenet_pretrained.pth"
+    "hrnet18-s1":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnet_w18_small_v1-f460c6bc.pth",
+    "hrnet18-s2":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnet_w18_small_v2-4c50a8cb.pth",
+    "hrnet18":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w18-8cb57bb9.pth",
+    "hrnet30":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w30-8d7f8dab.pth",
+    "hrnet32":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w32-90d8c5fb.pth",
+    "hrnet40":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w40-7cd397a4.pth",
+    "hrnet44":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w44-c9ac8c18.pth",
+    "hrnet48":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w48-abd2e6ab.pth",
+    "hrnet64":"https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-hrnet/hrnetv2_w64-b47cc881.pth",
 }
 
 def _get_pretrained_settings(encoder):
@@ -819,6 +828,42 @@ def _get_pretrained_settings(encoder):
 
 
 HRNetEncoders = {
+    "hrnet18-s1":{
+        "encoder": HRNetEncoder,
+        "pretrained_settings": _get_pretrained_settings("hrnet18-s1"),
+        "params": {
+            "out_channels": (3, 64, 16, 32, 64, 128),
+            "align_corners":True,
+            "num_classes":3,
+            "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+            "fuse_method": "SUM",
+            "num_modules": [1,1,1,1],
+            "num_branches": [1,2,3,4],
+            "num_channels": [[32],[16,32],[16,32,64],[16,32,64,128]],
+            "num_blocks": [[1],[2,2],[2,2,2],[2,2,2,2]],
+            "bn_momentum": 0.1,
+            "relu_inplace": True,
+            "model_name": "HRNet-18-s1",
+        },
+    },
+    "hrnet18-s2":{
+        "encoder": HRNetEncoder,
+        "pretrained_settings": _get_pretrained_settings("hrnet18-s2"),
+        "params": {
+            "out_channels": (3, 64, 18, 36, 72, 144),
+            "align_corners":True,
+            "num_classes":3,
+            "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+            "fuse_method": "SUM",
+            "num_modules": [1,1,3,2],
+            "num_branches": [1,2,3,4],
+            "num_channels": [[64],[18,36],[18,36,72],[18,36,72,144]],
+            "num_blocks": [[2],[2,2],[2,2,2],[2,2,2,2]],
+            "bn_momentum": 0.1,
+            "relu_inplace": True,
+            "model_name": "HRNet-18-s2",
+        },
+    },
     "hrnet18":{
         "encoder": HRNetEncoder,
         "pretrained_settings": _get_pretrained_settings("hrnet18"),
@@ -836,6 +881,24 @@ HRNetEncoders = {
             "relu_inplace": True,
             "model_name": "HRNet-18",
         },
+    },
+    "hrnet30":{
+            "encoder": HRNetEncoder,
+            "pretrained_settings": _get_pretrained_settings("hrnet30"),
+            "params": {
+                "out_channels": (3, 64, 30,60,120,240),
+                "align_corners":True,
+                "num_classes":3,
+                "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+                "fuse_method": "SUM",
+                "num_modules": [1,1,4,3],
+                "num_branches": [1,2,3,4],
+                "num_channels": [[64],[30,60],[30,60,120],[30,60,120,240]],
+                "num_blocks": [[4],[4,4],[4,4,4],[4,4,4,4]],
+                "bn_momentum": 0.1,
+                "relu_inplace": True,
+                "model_name": "HRNet-30",
+            },
     },
     "hrnet32":{
             "encoder": HRNetEncoder,
@@ -855,6 +918,42 @@ HRNetEncoders = {
                 "model_name": "HRNet-32",
             },
     },
+    "hrnet40":{
+            "encoder": HRNetEncoder,
+            "pretrained_settings": _get_pretrained_settings("hrnet40"),
+            "params": {
+                "out_channels": (3, 64, 40,80,160,320),
+                "align_corners":True,
+                "num_classes":3,
+                "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+                "fuse_method": "SUM",
+                "num_modules": [1,1,4,3],
+                "num_branches": [1,2,3,4],
+                "num_channels": [[64],[40,80],[40,80,160],[40,80,160,320]],
+                "num_blocks": [[4],[4,4],[4,4,4],[4,4,4,4]],
+                "bn_momentum": 0.1,
+                "relu_inplace": True,
+                "model_name": "HRNet-40",
+            }
+    },
+    "hrnet44":{
+            "encoder": HRNetEncoder,
+            "pretrained_settings": _get_pretrained_settings("hrnet44"),
+            "params": {
+                "out_channels": (3, 64, 44,88,176,352),
+                "align_corners":True,
+                "num_classes":3,
+                "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+                "fuse_method": "SUM",
+                "num_modules": [1,1,4,3],
+                "num_branches": [1,2,3,4],
+                "num_channels": [[64],[44,88],[44,88,176],[44,88,176,352]],
+                "num_blocks": [[4],[4,4],[4,4,4],[4,4,4,4]],
+                "bn_momentum": 0.1,
+                "relu_inplace": True,
+                "model_name": "HRNet-44",
+            },
+        },
     "hrnet48":{
             "encoder": HRNetEncoder,
             "pretrained_settings": _get_pretrained_settings("hrnet48"),
@@ -872,7 +971,25 @@ HRNetEncoders = {
                 "relu_inplace": True,
                 "model_name": "HRNet-48",
             },
-        }
+        },
+    "hrnet64":{
+            "encoder": HRNetEncoder,
+            "pretrained_settings": _get_pretrained_settings("hrnet64"),
+            "params": {
+                "out_channels": (3, 64, 64,128,256,512),
+                "align_corners":True,
+                "num_classes":3,
+                "block": ["BOTTLENECK",'BASIC','BASIC','BASIC'],
+                "fuse_method": "SUM",
+                "num_modules": [1,1,4,3],
+                "num_branches": [1,2,3,4],
+                "num_channels": [[64],[64,128],[64,128,256],[64,128,256,512]],
+                "num_blocks": [[4],[4,4],[4,4,4],[4,4,4,4]],
+                "bn_momentum": 0.1,
+                "relu_inplace": True,
+                "model_name": "HRNet-64",
+            },
+        },
 }
 
 def get_seg_model(cfg, **kwargs):
